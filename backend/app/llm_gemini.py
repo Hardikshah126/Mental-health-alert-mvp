@@ -1,19 +1,17 @@
 # backend/app/llm_gemini.py
 import os
 from dotenv import load_dotenv
-
 import google.generativeai as genai
 
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-
-
+# Load environment variables
 load_dotenv()
 
-print("DEBUG: GEMINI_API_KEY present?", bool(os.getenv("GEMINI_API_KEY")))
-
 API_KEY = os.getenv("GEMINI_API_KEY")
-DEFAULT_MODEL = "gemini-1.5-flash"
+DEFAULT_MODEL = "models/gemini-1.5-flash"   # ✅ Correct model name
 
+print("DEBUG: GEMINI_API_KEY present?", bool(API_KEY))
+
+# Configure Gemini
 if API_KEY:
     genai.configure(api_key=API_KEY)
 else:
@@ -44,14 +42,17 @@ def build_prompt(user_text: str, retrieved_context=None, sleep_hours=None, risk=
 
 def get_suggestions_gemini(prompt: str, model: str = DEFAULT_MODEL) -> str:
     """
-    Call Gemini (google-generativeai) and return text output.
-    If API key isn't set, return a helpful message instead of raising.
+    Call Gemini (google-generativeai) and return generated text.
+    If model fails, fallback to DEFAULT_MODEL.
     """
     if not API_KEY:
         return "(Gemini key missing - set GEMINI_API_KEY in environment variables)"
 
+    # Ensure model name is properly prefixed
+    if not model.startswith("models/"):
+        model = f"models/{model}"
+
     try:
-        # if someone passes an invalid model name, fall back to default
         try:
             gmodel = genai.GenerativeModel(model)
         except Exception:
@@ -59,5 +60,6 @@ def get_suggestions_gemini(prompt: str, model: str = DEFAULT_MODEL) -> str:
 
         response = gmodel.generate_content(prompt)
         return (response.text or "").strip()
+
     except Exception as e:
         return f"(Gemini error: {e})"
