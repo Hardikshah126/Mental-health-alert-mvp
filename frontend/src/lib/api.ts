@@ -15,19 +15,16 @@ export interface AnalyzeResponse {
   suggestions: string;
 }
 
-// frontend/src/lib/api.ts
-
+// ✅ Use env var if present, otherwise fall back to Render URL
 const BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
-;
+  import.meta.env.VITE_API_BASE_URL ??
+  "https://mental-health-alert-mvp-1.onrender.com";
 
-/**
- * Calls backend /analyze. Contains console logs to help debug payloads & errors.
- */
+console.log("DEBUG BASE_URL used by frontend =>", BASE_URL);
+
 export async function analyzeRemote(
   payload: AnalyzePayload
 ): Promise<AnalyzeResponse> {
-  // Debug: show what the frontend is about to send
   console.log("📤 analyzeRemote payload ->", payload);
 
   try {
