@@ -17,15 +17,21 @@ from .llm_gemini import build_prompt, get_suggestions_gemini
 
 app = FastAPI(title="Mental Health Early-Warning Backend")
 
+# backend/app/main.py
 from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # DEV ONLY: quick unblock
+    allow_origins=["*"],        # ALLOW ALL ORIGINS (DEV)
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+print("CORS enabled for all origins")
+
 print("DEBUG: CORS set to allow * (dev temporary)")
 
 
