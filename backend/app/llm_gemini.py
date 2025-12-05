@@ -7,7 +7,7 @@ import google.generativeai as genai
 load_dotenv()
 
 API_KEY = os.getenv("GEMINI_API_KEY")
-DEFAULT_MODEL = "gemini-1.5-flash"
+DEFAULT_MODEL = "gemini-1.5-flash-latest"
 
 print("DEBUG: GEMINI_API_KEY present?", bool(API_KEY))
 
