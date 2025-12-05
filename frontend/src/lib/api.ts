@@ -15,7 +15,7 @@ export interface AnalyzeResponse {
   suggestions: string;
 }
 
-const BASE_URL = "http://127.0.0.1:8000";
+const BASE_URL = "https://mental-health-alert-mvp-1.onrender.com";
 
 /**
  * Calls backend /analyze. Contains console logs to help debug payloads & errors.
