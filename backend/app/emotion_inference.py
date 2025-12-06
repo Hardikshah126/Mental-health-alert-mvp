@@ -5,6 +5,10 @@ from functools import lru_cache
 from typing import List, Dict
 
 import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Load .env locally (Render will use env vars directly)
+load_dotenv()
 
 # Configure Gemini from env
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -24,7 +28,8 @@ EMOTION_LABELS = [
     "surprise",
 ]
 
-GEMINI_MODEL_NAME = "gemini-1.5-flash"
+# 🔥 IMPORTANT: use a valid, current model
+GEMINI_MODEL_NAME = "gemini-2.5-flash"
 
 
 @lru_cache()
@@ -32,6 +37,7 @@ def get_model(model_name: str = GEMINI_MODEL_NAME) -> genai.GenerativeModel:
     """
     Cached Gemini model instance.
     """
+    print("DEBUG emotion_inference: using model", model_name)
     return genai.GenerativeModel(model_name)
 
 
@@ -41,9 +47,7 @@ def _clean_json_text(text: str) -> str:
     """
     text = text.strip()
     if text.startswith("```"):
-        # remove leading and trailing backticks
         text = text.strip("`").strip()
-        # remove 'json' language tag if present
         if text.lower().startswith("json"):
             text = text[4:].strip()
     return text
@@ -62,52 +66,4 @@ def get_emotion_scores(text: str, model_name: str = GEMINI_MODEL_NAME) -> List[D
     prompt = f"""
     You are an emotion analysis model.
 
-    For the following user message, output ONLY a JSON array.
-    The array must have one object for EACH of these labels:
-
-    {EMOTION_LABELS}
-
-    Each object must have this shape:
-    {{
-      "label": "<one of the labels above>",
-      "score": <a float between 0 and 1>
-    }}
-
-    Make sure:
-    - Every label appears exactly once.
-    - Scores roughly reflect the emotional intensity.
-    - The array is valid JSON, with no extra text.
-
-    User message:
-    \"\"\"{text}\"\"\"
-    """
-
-    response = model.generate_content(prompt)
-    raw = response.text or ""
-    raw = _clean_json_text(raw)
-
-    try:
-        data = json.loads(raw)
-    except json.JSONDecodeError as e:
-        raise RuntimeError(f"Failed to parse Gemini emotion JSON: {e}\nRaw output: {raw!r}")
-
-    # basic validation / normalization
-    if not isinstance(data, list):
-        raise RuntimeError(f"Expected a JSON array, got: {type(data)}")
-
-    normalized = []
-    for item in data:
-        label = str(item.get("label", "")).lower()
-        score = float(item.get("score", 0.0))
-
-        # keep only known labels
-        if label not in EMOTION_LABELS:
-            continue
-
-        normalized.append({"label": label, "score": score})
-
-    # if something went wrong, fall back to neutral
-    if not normalized:
-        normalized = [{"label": "neutral", "score": 1.0}]
-
-    return normalized
+    For the f
