@@ -66,4 +66,49 @@ def get_emotion_scores(text: str, model_name: str = GEMINI_MODEL_NAME) -> List[D
     prompt = f"""
     You are an emotion analysis model.
 
-    For the f
+    For the following user message, output ONLY a JSON array.
+    The array must have one object for EACH of these labels:
+
+    {EMOTION_LABELS}
+
+    Each object must have this shape:
+    {{
+      "label": "<one of the labels above>",
+      "score": <a float between 0 and 1>
+    }}
+
+    Make sure:
+    - Every label appears exactly once.
+    - Scores roughly reflect the emotional intensity.
+    - The array is valid JSON, with no extra text.
+
+    User message:
+    \"\"\"{text}\"\"\" 
+    """
+
+    response = model.generate_content(prompt)
+    raw = response.text or ""
+    raw = _clean_json_text(raw)
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise RuntimeError(f"Failed to parse Gemini emotion JSON: {e}\nRaw output: {raw!r}")
+
+    if not isinstance(data, list):
+        raise RuntimeError(f"Expected a JSON array, got: {type(data)}")
+
+    normalized = []
+    for item in data:
+        label = str(item.get("label", "")).lower()
+        score = float(item.get("score", 0.0))
+
+        if label not in EMOTION_LABELS:
+            continue
+
+        normalized.append({"label": label, "score": score})
+
+    if not normalized:
+        normalized = [{"label": "neutral", "score": 1.0}]
+
+    return normalized
