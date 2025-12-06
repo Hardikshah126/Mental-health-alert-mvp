@@ -1,24 +1,20 @@
 # backend/app/llm_gemini.py
-
 import os
 from dotenv import load_dotenv
-from google import genai   # NEW GenAI SDK
+import google.generativeai as genai
 
-# Load .env for local dev (Render will use real env vars)
+# Load .env for local dev
 load_dotenv()
 
 API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL_NAME = "gemini-2.5-flash"   # model you see in Google AI Studio
+MODEL_NAME = "gemini-2.5-flash"  # the model you see in AI Studio
 
 print("DEBUG: GEMINI_API_KEY present?", bool(API_KEY))
 
-if not API_KEY:
-    print("WARNING: GEMINI_API_KEY is not set; Gemini calls will return a fallback message.")
-    client = None
+if API_KEY:
+    genai.configure(api_key=API_KEY)
 else:
-    # New GenAI client
-    client = genai.Client(api_key=API_KEY)
-    print("Gemini client initialized")
+    print("WARNING: GEMINI_API_KEY is not set; Gemini calls will return a fallback message.")
 
 
 def build_prompt(user_text: str, retrieved_context=None, sleep_hours=None, risk=None):
@@ -42,17 +38,13 @@ def build_prompt(user_text: str, retrieved_context=None, sleep_hours=None, risk=
 
 
 def get_suggestions_gemini(prompt: str) -> str:
-    """Call Gemini 2.5 Flash via the new Google GenAI SDK."""
-    if client is None:
+    if not API_KEY:
         return "(Gemini key missing - set GEMINI_API_KEY in environment variables)"
 
     try:
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=prompt,
-        )
+        model = genai.GenerativeModel(MODEL_NAME)
+        response = model.generate_content(prompt)
 
-        # google-genai responses expose .text() helper
         text_attr = getattr(response, "text", None)
         if callable(text_attr):
             return (text_attr() or "").strip()
