@@ -3,11 +3,11 @@ import os
 from dotenv import load_dotenv
 import google.generativeai as genai
 
-# Load .env BEFORE configuring Gemini
+# Load .env locally (harmless on Render; env vars still work)
 load_dotenv()
 
 API_KEY = os.getenv("GEMINI_API_KEY")
-DEFAULT_MODEL = "gemini-1.5-flash-latest"
+MODEL_NAME = "gemini-1.5-flash-latest"
 
 print("DEBUG: GEMINI_API_KEY present?", bool(API_KEY))
 
@@ -37,18 +37,14 @@ def build_prompt(user_text: str, retrieved_context=None, sleep_hours=None, risk=
     )
 
 
-def get_suggestions_gemini(prompt: str, model: str = DEFAULT_MODEL) -> str:
+def get_suggestions_gemini(prompt: str) -> str:
     if not API_KEY:
         return "(Gemini key missing - set GEMINI_API_KEY in environment variables)"
 
     try:
-        try:
-            gmodel = genai.GenerativeModel(model)
-        except Exception:
-            gmodel = genai.GenerativeModel(DEFAULT_MODEL)
-
+        gmodel = genai.GenerativeModel(MODEL_NAME)
         response = gmodel.generate_content(prompt)
-        return (response.text or "").strip()
-
+        return (getattr(response, "text", "") or "").strip()
     except Exception as e:
+        print("Gemini error:", repr(e))
         return f"(Gemini error: {e})"
